@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>AWS Open API Sample</title>
+
+        <!-- JQuery 라이브러리 설정 -->
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+        <!-- 디바이스 조회 자바스크립트 로딩-->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+        <script src="controller_devices.js"></script>
+        <script type="text/javascript">// API 시작
+        var aar = [];
+        var bar = [];
+        var i=0;
+function Start() {
+    invokeAPI();
+    invokeAPI2();
+    emptyTable();
+}
+        
+var invokeAPI = function() {
+
+    // 디바이스 조회 URI
+    // prod 스테이지 편집기의 맨 위에 있는 "호출 URL/devices"로 대체해야 함
+    var API_URI = 'https://gy0bfye8v3.execute-api.ap-northeast-2.amazonaws.com/prod/devices/MyMKRWiFi1010/log?from=2019-11-29%2000:00:00&to=2019-12-13%2023:09:36';               
+    $.ajax(API_URI, {
+        method: 'GET',
+        contentType: "application/json",
+
+        success: function (data, status, xhr) {
+
+            var result = JSON.parse(data);
+            setDataList(result.data);  // 성공시, 데이터 출력을 위한 함수 호출
+            setData(result.data);
+            //setData2(result.data);
+            console.log(data);
+        },
+        error: function(xhr,status,e){
+          //  document.getElementById("result").innerHTML="Error";
+            alert("error");
+        }
+    });
+};
+
+
+
+// 테이블 데이터 삭제
+var emptyTable = function() {
+    $( '#mytable > tbody').empty();
+}
+
+// 데이터 출력을 위한 함수
+var setDataList = function(data){
+
+    $( '#mytable > tbody').empty();
+    data.forEach(function(v){
+
+        var tr1 = document.createElement("tr");
+        var td1 = document.createElement("td");
+        var td2 = document.createElement("td");
+        var td3 = document.createElement("td");
+        var td4 = document.createElement("td");
+        var td5 = document.createElement("td");
+        td1.innerText = v.WaterLevel;
+        td2.innerText = v.ledRed;
+        td3.innerText = v.ledYellow;
+        td4.innerText = v.ledGreen;
+        td5.innerText = v.timestamp;
+
+        if(v.ledRed == 'ON'){
+            td2.style.color="red"
+        }
+        if(v.ledYellow == 'ON'){
+            td3.style.color="#fff000"
+        }
+        if(v.ledGreen == 'ON'){
+            td4.style.color="green"
+        }
+
+
+        tr1.appendChild(td1);
+        tr1.appendChild(td2);
+        tr1.appendChild(td3);
+        tr1.appendChild(td4);
+        tr1.appendChild(td5);
+        $("table").append(tr1);
+
+    })
+
+    if(data.length>0){
+            // 디바이스 목록 조회결과가 있는 경우 데이터가 없습니다 메시지 삭제
+    } else if (data.length ==0) {
+        document.getElementById("result").innerHTML="No Data";
+    }
+}
+var setData = function(data){
+    data.forEach(function(v){
+      aar.push(v.timestamp);
+      bar.push(v.WaterLevel);
+      i++;
+    })
+
+    for(var j = 0 ; j < i ; j++){
+              bar[j] *= 1;
+            }
+}
+
+
+setTimeout(function() {
+    drawChart2();
+}, 5000);
+
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart2);
+
+      function drawChart2() {
+        var data = new google.visualization.arrayToDataTable([
+          ['시간', '수심', ''],
+          [aar[9], bar[9],0],
+          [aar[8], bar[8],0],
+          [aar[7], bar[7],0],
+          [aar[6], bar[6],0],
+          [aar[5], bar[5],0],
+          [aar[4], bar[4],0],
+          [aar[3], bar[3],0],
+          [aar[2], bar[2],0],
+          [aar[1], bar[1],0],
+          [aar[0], bar[0],0],
+          
+        ]);
+
+        var options = {
+          title: '강 수심',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart2 = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart2.draw(data, options);
+      }
+</script>
+    </head>
+    <body>
+        <div style="width:30%;float: left;">
+        <h3>My AWS API</h3>
+
+        <h4> 나의 디바이스 데이터 조회 
+            <input type="button" value="조회" onclick="Start();" />
+
+        </h4>
+
+        <table id="mytable">
+            <thead style="background-color:grey">
+                <th>수 위 </th>
+                <th>RED </th> 
+                <th>YELLOW </th>
+                <th>GREEN </th>
+                <th>발 생 시 간  </th>    
+            </thead>
+            <tbody> </tbody>
+        </table>
+        </div>
+
+            <div style="width:70%;float: right;">
+                <h3>MY AWS Device Control</h3>
+
+        <h4> 나의 디바이스 제어
+            <input type="button" value="UP" onclick="UP();" />
+            <input type="button" value="DOWN" onclick="DOWN();" />
+            <div id="state" style="font-size: xx-large;">No Data</div>
+            <div id="curve_chart" style="width: 700px; height: 300px"></div>
+            	
+
+            </div>
+        </h4>
+            </div>
+        
+    </body>
+
+
+</html>
